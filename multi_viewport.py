@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 Marco Sumari Tellez and IngeTrazo contributors.
+# Copyright (C) 2026 archimades27 and IngeTrazo contributors.
 """Multi-Viewport & View Tools Plugin for IngeTrazo.
 
 Features:
@@ -63,6 +63,22 @@ TEXT_COLOR = "#e0e0e0"
 # ---------------------------------------------------------------------------
 # Vector Icon Generation
 # ---------------------------------------------------------------------------
+
+
+def _set_free_shortcut(window, action, keys: str) -> bool:
+    """Give ``action`` the shortcut ``keys`` only if no other action in the
+    window already uses it. Qt disables BOTH actions when two share a
+    shortcut, so a clash would break IngeTrazo's own command too."""
+    seq = QKeySequence(keys)
+    try:
+        for other in window.findChildren(QAction):
+            if other is not action and seq in other.shortcuts():
+                return False
+    except Exception:
+        pass
+    action.setShortcut(seq)
+    return True
+
 
 class IconVault:
     """Generates crisp vector icons for toolbars using QPainter."""
@@ -1120,19 +1136,19 @@ class ViewToolsPlugin:
         tb_vis = self.window._new_toolbar("Visibility", "toolbar_visibility")
 
         act_hide = tb_vis.addAction(IconVault.hide_selected(), tr("Hide Selected (Ctrl+H)"))
-        act_hide.setShortcut(QKeySequence("Ctrl+H"))
+        _set_free_shortcut(self.window, act_hide, "Ctrl+H")
         act_hide.triggered.connect(self.visibility.hide_selected)
 
         act_unhide_all = tb_vis.addAction(IconVault.unhide_all(), tr("Unhide All (Ctrl+Shift+H)"))
-        act_unhide_all.setShortcut(QKeySequence("Ctrl+Shift+H"))
+        _set_free_shortcut(self.window, act_unhide_all, "Ctrl+Shift+H")
         act_unhide_all.triggered.connect(self.visibility.unhide_all)
 
         act_unhide_last = tb_vis.addAction(IconVault.unhide_last(), tr("Unhide Last (Ctrl+Alt+H)"))
-        act_unhide_last.setShortcut(QKeySequence("Ctrl+Alt+H"))
+        _set_free_shortcut(self.window, act_unhide_last, "Ctrl+Alt+H")
         act_unhide_last.triggered.connect(self.visibility.unhide_last)
 
         act_isolate = tb_vis.addAction(IconVault.isolate_selection(), tr("Isolate Selection (Ctrl+I)"))
-        act_isolate.setShortcut(QKeySequence("Ctrl+I"))
+        _set_free_shortcut(self.window, act_isolate, "Ctrl+I")
         act_isolate.triggered.connect(self.visibility.isolate_selection)
 
         tb_vis.show()
@@ -1150,7 +1166,7 @@ class ViewToolsPlugin:
         ]
         for s_name, label, sc, icon in style_defs:
             act = tb_styles.addAction(icon, tr(label))
-            act.setShortcut(QKeySequence(sc))
+            _set_free_shortcut(self.window, act, sc)
             act.triggered.connect(lambda checked=False, sn=s_name: self.styles.apply_style(sn))
 
         tb_styles.addSeparator()
@@ -1166,7 +1182,7 @@ class ViewToolsPlugin:
         act_single.triggered.connect(lambda: self.views.set_mode(MultiViewportContainer.MODE_SINGLE))
 
         act_quad = tb_views.addAction(IconVault.view_quad(), tr("Quad View (Alt+W / Ctrl+Alt+Q)"))
-        act_quad.setShortcut(QKeySequence("Alt+W"))
+        _set_free_shortcut(self.window, act_quad, "Alt+W")
         act_quad.triggered.connect(self.views.toggle_maximize)
 
         act_split_h = tb_views.addAction(IconVault.view_split_h(), tr("Split Horizontal (2 Views)"))
@@ -1185,7 +1201,7 @@ class ViewToolsPlugin:
         ]
         for c_name, label, sc in cam_defs:
             act = tb_views.addAction(IconVault.standard_view(c_name), tr(label))
-            act.setShortcut(QKeySequence(sc))
+            _set_free_shortcut(self.window, act, sc)
             act.triggered.connect(lambda checked=False, cn=c_name: self.views.set_view(cn))
 
         tb_views.show()
@@ -1204,23 +1220,23 @@ class ViewToolsPlugin:
     def _register_shortcuts(self) -> None:
         # Extra convenience shortcuts
         alt_quad = QAction(self.window)
-        alt_quad.setShortcut(QKeySequence("Ctrl+Alt+Q"))
+        _set_free_shortcut(self.window, alt_quad, "Ctrl+Alt+Q")
         alt_quad.triggered.connect(self.views.toggle_maximize)
         self.window.addAction(alt_quad)
 
         # Standard views 4..6
         v4 = QAction(self.window)
-        v4.setShortcut(QKeySequence("Ctrl+4"))
+        _set_free_shortcut(self.window, v4, "Ctrl+4")
         v4.triggered.connect(lambda: self.views.set_view("left"))
         self.window.addAction(v4)
 
         v5 = QAction(self.window)
-        v5.setShortcut(QKeySequence("Ctrl+5"))
+        _set_free_shortcut(self.window, v5, "Ctrl+5")
         v5.triggered.connect(lambda: self.views.set_view("back"))
         self.window.addAction(v5)
 
         v6 = QAction(self.window)
-        v6.setShortcut(QKeySequence("Ctrl+6"))
+        _set_free_shortcut(self.window, v6, "Ctrl+6")
         v6.triggered.connect(lambda: self.views.set_view("bottom"))
         self.window.addAction(v6)
 
